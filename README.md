@@ -8,7 +8,7 @@ An AI-powered, guardrailed patient education and navigation assistant that expla
 User Query
     │
     ▼
-┌─────────┐     ┌──────┐
+┌──────────┐     ┌──────┐
 │  agent   │◄───►│ tool │   (ReAct loop)
 └────┬─────┘     └──────┘
      │ draft_answer
