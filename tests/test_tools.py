@@ -48,9 +48,22 @@ class TestPatientTools:
         encounters = json.loads(encounters_raw)
         if encounters:
             enc_id = encounters[0]["encounter_id"]
-            raw = get_clinical_notes_for_encounter.invoke({"encounter_id": enc_id})
+            raw = get_clinical_notes_for_encounter.invoke({"patient_id": "P001", "encounter_id": enc_id})
             data = json.loads(raw)
             assert isinstance(data, list)
+
+    def test_get_clinical_notes_for_encounter_cross_patient_blocked(self):
+        from ehr_assistant.tools.patient import get_clinical_notes_for_encounter, list_patient_encounters
+
+        # Grab P001's encounter, then query it as P002 — should return empty list (scoped out)
+        encounters_raw = list_patient_encounters.invoke({"patient_id": "P001", "limit": 1})
+        encounters = json.loads(encounters_raw)
+        if encounters:
+            enc_id = encounters[0]["encounter_id"]
+            raw = get_clinical_notes_for_encounter.invoke({"patient_id": "P002", "encounter_id": enc_id})
+            data = json.loads(raw)
+            assert isinstance(data, list)
+            assert len(data) == 0, "Cross-patient note access must return no rows"
 
     def test_get_labs(self):
         from ehr_assistant.tools.patient import get_labs
