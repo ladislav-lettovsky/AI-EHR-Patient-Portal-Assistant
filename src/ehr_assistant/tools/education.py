@@ -17,7 +17,7 @@ def lookup_lab_education(test_name: str) -> str:
 
     hit = df[df["_k"] == tn]
     if hit.empty:
-        hit = df[df["_k"].str.contains(tn, na=False)]
+        hit = df[df["_k"].str.contains(tn, na=False, regex=False)]
 
     if hit.empty:
         return to_json({"error": f"No lab education found for '{test_name}'"})
@@ -36,7 +36,7 @@ def lookup_medication_education(med_name: str) -> str:
 
     hit = df[df["_k"] == mn]
     if hit.empty:
-        hit = df[df["_k"].str.contains(mn, na=False)]
+        hit = df[df["_k"].str.contains(mn, na=False, regex=False)]
 
     if hit.empty:
         return to_json({"error": f"No medication education found for '{med_name}'"})

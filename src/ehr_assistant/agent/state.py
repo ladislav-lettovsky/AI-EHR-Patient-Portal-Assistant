@@ -58,7 +58,7 @@ def init_state(patient_id: Optional[str], user_query: str, max_steps: int = 5) -
         "citations": [],
         "draft_answer": None,
         "final_answer": None,
-        "validation_result": {},
+        "validation_result": None,
         "errors": [],
         "intent_class": "",
         "preferred_language": "en",

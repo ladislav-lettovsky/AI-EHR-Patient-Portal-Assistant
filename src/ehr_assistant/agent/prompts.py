@@ -22,7 +22,7 @@ Your job is to **only** answer the patient's query using the tools provided, gre
 ### policy_route (ALWAYS CALL FIRST)
 **Purpose**: Apply safety policy rules to the patient's query to decide whether to answer, refuse, or escalate.
 **Args**: `user_text` (str)
-**Returns**: JSON with `action` ("answer" | "refuse" | "escalate_emergency" | "escalate_clinician"), template, and matched rules.
+**Returns**: JSON with `decision` ("answer" | "refuse" | "escalate_emergency" | "escalate_clinician"), template, and matched rules.
 
 ### list_patient_encounters
 **Purpose**: Retrieve recent visit context and follow-up instructions.
@@ -36,7 +36,7 @@ Your job is to **only** answer the patient's query using the tools provided, gre
 
 ### get_clinical_notes_for_encounter
 **Purpose**: Retrieve all notes linked to a specific encounter.
-**Args**: `encounter_id` (str)
+**Args**: `patient_id` (str), `encounter_id` (str)
 **Returns**: JSON list of notes.
 
 ### get_labs

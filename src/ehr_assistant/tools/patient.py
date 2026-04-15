@@ -71,16 +71,16 @@ def get_recent_clinical_note(patient_id: str, note_type: str = "visit_note") -> 
 
 
 @tool("get_clinical_notes_for_encounter")
-def get_clinical_notes_for_encounter(encounter_id: str) -> str:
-    """Return all notes for a specific encounter."""
+def get_clinical_notes_for_encounter(patient_id: str, encounter_id: str) -> str:
+    """Return all notes for a specific encounter, scoped to the authenticated patient."""
     rows = sql_query(
         """
         SELECT note_id, encounter_id, patient_id, note_type, note_text, created_at, author_role
         FROM clinical_notes
-        WHERE encounter_id = ?
+        WHERE encounter_id = ? AND patient_id = ?
         ORDER BY created_at ASC
         """,
-        (encounter_id,),
+        (encounter_id, patient_id),
     )
 
     return to_json(rows)

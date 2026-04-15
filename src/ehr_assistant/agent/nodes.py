@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from typing import Any, Dict
 
@@ -24,6 +25,8 @@ from ..tools import (
 )
 from .prompts import VALIDATION_PROMPT
 from .state import AgentState
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Lazy-init LLMs (not at import time — enables testing with mocks)
@@ -104,10 +107,15 @@ def agent_node(state: AgentState) -> Dict[str, Any]:
 
     # If no tool calls, treat as draft answer and stop looping
     if not getattr(ai_msg, "tool_calls", None):
+        content = ai_msg.content or (
+            "I may not have enough information yet to answer confidently. "
+            "I can explain what your records show or share general information. "
+            "For medical advice (especially medication changes) or urgent concerns, please contact your clinician."
+        )
         return {
             "messages": new_messages,
             "step": new_step,
-            "draft_answer": ai_msg.content,
+            "draft_answer": content,
         }
 
     # Tool calls exist: continue loop, but MUST still return an update
@@ -156,6 +164,11 @@ def tool_exec_node(state: AgentState) -> Dict[str, Any]:
     updated_preferred_language = state["preferred_language"]
     updated_health_literacy_level = state["health_literacy_level"]
 
+    # Policy fields — updated if policy_route is called
+    updated_decision = state.get("decision", "answer")
+    updated_policy_rule_id = state.get("policy_rule_id")
+    updated_policy_template = state.get("policy_template")
+
     for tc in tool_calls:
         name = tc.get("name")
         args = tc.get("args", {}) or {}
@@ -167,7 +180,8 @@ def tool_exec_node(state: AgentState) -> Dict[str, Any]:
             new_messages.append(
                 ToolMessage(content=f"Blocked unknown tool: {name}", name=name or "unknown", tool_call_id=tool_id)
             )
-            BLOCKED_TOOLNAMES.add(name)  # add to blocked set to prevent future attempts with the same tool name
+            if name:  # only add non-None names to avoid polluting the set
+                BLOCKED_TOOLNAMES.add(name)
             continue
 
         # Critical: prevent cross-patient data access by enforcing patient_id
@@ -195,6 +209,15 @@ def tool_exec_node(state: AgentState) -> Dict[str, Any]:
                         updated_preferred_language = profile_data["preferred_language"]
                     if "health_literacy_level" in profile_data:
                         updated_health_literacy_level = profile_data["health_literacy_level"]
+
+            if name == "policy_route":
+                try:
+                    policy_data = json.loads(result)
+                    updated_decision = policy_data.get("decision", updated_decision)
+                    updated_policy_rule_id = policy_data.get("policy_rule_id", updated_policy_rule_id)
+                    updated_policy_template = policy_data.get("policy_template", updated_policy_template)
+                except Exception:
+                    pass
 
             # Capture citations from education tools
             if name in INFORMATION_TOOLNAMES:
@@ -230,6 +253,9 @@ def tool_exec_node(state: AgentState) -> Dict[str, Any]:
         "tool_outputs": tool_outputs,
         "preferred_language": updated_preferred_language,                       # Propagate updated value
         "health_literacy_level": updated_health_literacy_level,                 # Propagate updated value
+        "decision": updated_decision,                                           # Propagate policy decision
+        "policy_rule_id": updated_policy_rule_id,                              # Propagate matched rule
+        "policy_template": updated_policy_template,                            # Propagate response template
     }
 
 
@@ -245,19 +271,29 @@ def should_continue(state: AgentState) -> str:
     return "agent"                                                              # No answer yet and no tools requested; ask agent again
 
 
+_HARD_BLOCK_MESSAGE = (
+    "I'm sorry, but I cannot provide a response to this query as it may involve "
+    "medical advice that requires a qualified clinician. Please contact your care team "
+    "or call emergency services if this is urgent."
+)
+
+
 def final_policy_override_node(state: AgentState) -> Dict[str, Any]:
     """Final, deterministic safety override to select the response returned to the user."""
     decision = state.get("decision", "answer")
     user_query = state.get("user_query")
     policy_template = state.get("policy_template")
-    policy_rule_id = state.get("policy_rule_id")
 
     # If policy requires refusal/escalation, override any LLM output
     if decision in ("escalate_emergency", "refuse", "escalate_clinician") and policy_template:
         return {"final_answer": policy_template}
 
+    # If validator hard-blocked or returned FAIL, never ship the draft
+    if state.get("hard_block") or state.get("verdict") == "FAIL":
+        return {"final_answer": _HARD_BLOCK_MESSAGE}
+
     # If it's an empty query, engage in a dialog
-    if decision in ("answer") and len(user_query) == 0:
+    if decision == "answer" and len(user_query) == 0:
         return {"final_answer": "How can I help you? I'm EHR assistant and can answer a health-related query"}
 
     # Otherwise return the model's draft answer (or a fallback)
@@ -292,14 +328,14 @@ def validator_node(state: AgentState) -> Dict[str, Any]:
 
         result = json.loads(json_str)
     except Exception as e:
-        # If validator misbehaves, failover but log
-        print(f"Validator JSON parse failed: {e}")
-        print(f"Raw content from validator LLM: {raw.content}")
+        logger.warning("Validator JSON parse failed: %s", e)
+        logger.warning("Raw content from validator LLM: %s", raw.content)
         return {
             "verdict": "WARN",
             "scores": {},
             "flags": [{"dimension": "D1", "score": 4, "reason": "Validator JSON parse failed"}],
             "hard_block": False,
+            "validation_result": {"error": f"Validator JSON parse failed: {e}"},
         }
 
     return {

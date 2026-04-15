@@ -62,7 +62,7 @@ cp .env.example .env
 ## CLI Usage
 
 ```bash
-# Run all 10 built-in test cases
+# Run all 11 built-in use cases
 uv run -m ehr_assistant
 
 # Run a single query

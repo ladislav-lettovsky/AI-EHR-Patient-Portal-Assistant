@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from langgraph.graph import END, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 
 from .nodes import (
     agent_node,
@@ -14,7 +15,7 @@ from .nodes import (
 from .state import AgentState
 
 
-def build_graph() -> StateGraph:
+def build_graph() -> CompiledStateGraph:
     """Create, wire, compile, and return the LangGraph application."""
     graph = StateGraph(AgentState)
 

@@ -33,6 +33,7 @@ PATIENT_SCOPED_TOOLNAMES = {
     "get_patient_profile",
     "list_patient_encounters",
     "get_recent_clinical_note",
+    "get_clinical_notes_for_encounter",
     "get_labs",
     "get_medications",
     "get_allergies",
