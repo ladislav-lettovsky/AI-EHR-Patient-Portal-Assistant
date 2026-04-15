@@ -80,7 +80,7 @@ Use all available tools systematically, always starting with 1. and 2.:
 5. Retrieve all notes linked to a specific encounter using get_clinical_notes_for_encounter tool.
 6. Retrieve patient's recent lab results using get_labs tool.
 7. Retrieve patient's active/stopped medications using get_medications tool.
-8. Retrieve patient's recorded allergies using get_medications tool.
+8. Retrieve patient's recorded allergies using get_allergies tool.
 9. Retrieve patient-friendly education content for a lab test using lookup_lab_education tool.
 10. Retrieve patient-friendly education content for a medication using lookup_medication_education tool.
 11. Retrieve citation sources using lookup_trusted_source.

@@ -258,7 +258,7 @@ def final_policy_override_node(state: AgentState) -> Dict[str, Any]:
 
     # If it's an empty query, engage in a dialog
     if decision in ("answer") and len(user_query) == 0:
-        return {"final_answer": "How can I help you? I'm EHR assitant and can answer a health-related query"}
+        return {"final_answer": "How can I help you? I'm EHR assistant and can answer a health-related query"}
 
     # Otherwise return the model's draft answer (or a fallback)
     return {"final_answer": state.get("draft_answer") or "I'm not sure how to answer that yet."}
@@ -306,6 +306,6 @@ def validator_node(state: AgentState) -> Dict[str, Any]:
         "verdict": result.get("verdict", ""),
         "scores": result.get("scores", {}),
         "flags": result.get("flags", []),
-        "reasons": result.get("reasons", []),
+
         "hard_block": bool(result.get("hard_block", False)),
     }

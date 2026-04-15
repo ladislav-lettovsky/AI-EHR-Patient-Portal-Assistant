@@ -39,7 +39,7 @@ def print_audit_log(out: Dict[str, Any]) -> None:
     print("\n" + "*" * 21 + " Validation Result " + "*" * 21)
 
     if "error" in validation:
-        print("Validation Error: {}".format(out.get("error", "unknown")))
+        print("Validation Error: {}".format(validation.get("error", "unknown")))
     else:
         # Print validation verdict & scores
         print("Verdict: {} | Scores:".format(out.get("verdict", "")))

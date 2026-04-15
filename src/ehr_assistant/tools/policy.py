@@ -63,7 +63,7 @@ def policy_route(user_text: str) -> str:
         query=norm_text(user_text),
     )
 
-    matched_safety_topics = _get_llm_pol().invoke(formatted_prompt).topics
+    matched_safety_topics = [norm_text(t) for t in _get_llm_pol().invoke(formatted_prompt).topics]
 
     # Extract policy rules that match safety topics
     matched_policy_rules = []
