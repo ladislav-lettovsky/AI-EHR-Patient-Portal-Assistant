@@ -6,6 +6,10 @@ import logging
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Silence noisy third-party libraries before they are imported elsewhere.
 os.environ.setdefault("TQDM_DISABLE", "1")
 
