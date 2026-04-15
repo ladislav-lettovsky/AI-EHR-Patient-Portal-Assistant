@@ -63,19 +63,19 @@ cp .env.example .env
 
 ```bash
 # Run all 10 built-in test cases
-python3 -m ehr_assistant
+uv run -m ehr_assistant
 
 # Run a single query
-python3 -m ehr_assistant -p P001 -q "What does my Hemoglobin A1c result mean?"
+uv run -m ehr_assistant -p P001 -q "What does my Hemoglobin A1c result mean?"
 
 # With audit report and JSON output
-python3 -m ehr_assistant -p P001 -q "What are my medications?" --report --json-output results/
+uv run -m ehr_assistant -p P001 -q "What are my medications?" --report --json-output results/
 
 # Verbose logging
-python3 -m ehr_assistant -p P001 -q "Summarize my last visit" -v
+uv run -m ehr_assistant -p P001 -q "Summarize my last visit" -v
 
 # Skip JSON output
-python3 -m ehr_assistant --no-json
+uv run -m ehr_assistant --no-json
 ```
 
 ### CLI Flags
