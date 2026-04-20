@@ -29,16 +29,10 @@ jobs:
       - name: Sync dependencies
         run: uv sync --extra dev
 
-      - name: Ruff (lint + format check)
-        run: uv run ruff check .
-
-      - name: Ty (type check)
-        run: uv run ty check
-
-      - name: Pytest (unit tests only — integration tests skip without OPENAI_API_KEY)
+      - name: Run full quality check (just check)
         env:
           LANGCHAIN_TRACING_V2: "false"
-        run: uv run pytest
+        run: just check
 
   integration:
     name: Integration tests (real OpenAI API)

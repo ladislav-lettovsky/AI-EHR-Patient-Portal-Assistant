@@ -23,7 +23,14 @@ Thank you for your interest in contributing to the AI EHR Assistant!
    # Edit .env with your OPENAI_API_KEY
    ```
 
-4. **Create a feature branch**:
+4. **Install pre-commit hooks** (once per clone):
+   ```bash
+   just install-hooks
+   ```
+   This registers the hooks defined in `.pre-commit-config.yaml` so they run
+   automatically on every `git commit`.
+
+5. **Create a feature branch**:
    ```bash
    git checkout -b feature/your-feature-name
    ```
