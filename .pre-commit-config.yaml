@@ -6,6 +6,17 @@
 # To run manually on all files: `uv run pre-commit run --all-files`
 
 repos:
+  # ---------- Branch-protection hook (runs FIRST, local-only) ----------
+  # Blocks direct commits on main/master so long-lived branches stay
+  # PR-only. Disabled in CI where the concept of "current branch" does not
+  # apply the same way. Emergency escape: `SKIP=no-commit-to-branch git commit`.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: no-commit-to-branch
+        args: [--branch, main, --branch, master]
+        stages: [pre-commit]
+
   # ---------- Stock utility hooks ----------
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
