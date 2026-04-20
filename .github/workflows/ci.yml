@@ -8,6 +8,7 @@ on:
 
 jobs:
   check:
+    name: Lint, type-check, unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -28,8 +29,44 @@ jobs:
       - name: Sync dependencies
         run: uv sync --extra dev
 
-      - name: Run full quality check
+      - name: Ruff (lint + format check)
+        run: uv run ruff check .
+
+      - name: Ty (type check)
+        run: uv run ty check
+
+      - name: Pytest (unit tests only — integration tests skip without OPENAI_API_KEY)
         env:
-          OPENAI_API_KEY: sk-test-key-for-ci
           LANGCHAIN_TRACING_V2: "false"
-        run: just check
+        run: uv run pytest
+
+  integration:
+    name: Integration tests (real OpenAI API)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Only run when OPENAI_API_KEY secret is configured.
+    # Skips on fork PRs (forks cannot access secrets).
+    if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+    needs: check
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: python -m pip install uv
+
+      - name: Sync dependencies
+        run: uv sync --extra dev
+
+      - name: Pytest (integration tests only)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LANGCHAIN_TRACING_V2: "false"
+        run: uv run pytest tests/test_integration.py
+        # If OPENAI_API_KEY secret is not configured, env var will be empty
+        # and tests will skip via the pytestmark in test_integration.py
