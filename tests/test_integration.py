@@ -13,7 +13,6 @@ pytestmark = pytest.mark.skipif(
 
 
 class TestIntegration:
-
     def test_full_run_p001(self):
         from ehr_assistant.agent.graph import build_graph
         from ehr_assistant.agent.state import init_state

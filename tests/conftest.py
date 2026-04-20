@@ -34,6 +34,7 @@ def mock_llm():
             class _Resp:
                 content = '{"verdict":"PASS","scores":{},"flags":[],"hard_block":false}'
                 tool_calls = None
+
             return _Resp()
 
     return _MockLLM()
