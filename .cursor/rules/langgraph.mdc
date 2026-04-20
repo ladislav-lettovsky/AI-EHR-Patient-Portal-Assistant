@@ -1,0 +1,102 @@
+---
+description: LangGraph agent, graph, and tool conventions for this repo
+globs: src/ehr_assistant/agent/**/*.py,src/ehr_assistant/tools/**/*.py
+---
+
+# LangGraph conventions for ehr-assistant
+
+## Topology: linear 4-node graph, not hub-and-spoke
+Graph flow (see `agent/graph.py`):
+
+- `agent_node` runs the ReAct loop (tool calls + templated responses)
+- `tool_exec_node` executes the requested tool with forced patient_id scoping
+- `validator_node` cross-checks claims against tool results
+- `final_policy_override_node` enforces safety policy on the final answer
+
+The conditional edge `should_continue(state)` decides `"tool" | "agent" | "final"`.
+Never add a new post-agent branch without extending `should_continue`.
+
+## State is `AgentState` (TypedDict), not a dataclass
+`agent/state.py` defines `AgentState` as a TypedDict. LangGraph compiles
+TypedDict states natively via reducer annotations on each field.
+
+- Nodes receive `AgentState`, return partial `dict[str, Any]` updates
+- Do not convert to dataclass or Pydantic — it breaks LangGraph's merge logic
+- Always access fields via `state["key"]`, never attribute style
+
+## LLM initialization: lazy, inside helpers
+Never instantiate `ChatOpenAI(...)` at module top level. Pattern:
+
+```python
+_llm_x: Runnable | None = None  # Runnable, not ChatOpenAI — .bind_tools/.with_structured_output return Runnable
+
+def _get_llm_x() -> Runnable:
+    global _llm_x
+    if _llm_x is None:
+        _llm_x = ChatOpenAI(
+            model_name=MODEL_X,        # model_name, not model (ty/stubs)
+            temperature=TEMPERATURE,
+            base_url=OPENAI_BASE_URL,  # ty: ignore[unknown-argument]
+        ).bind_tools(TOOLS)
+    return _llm_x
+```
+
+Why lazy: top-level instantiation triggers API-key checks at import time,
+breaks mocking in tests, and slows CLI startup.
+
+## Patient-id enforcement — the cross-patient guardrail
+The LLM does NOT control which patient's data gets read. In `agent_node`,
+every tool call whose name is in `PATIENT_SCOPED_TOOLNAMES` has its
+`args["patient_id"]` **overwritten** with `state["patient_id"]` before
+`tool_exec_node` runs.
+
+When adding a new patient-reading tool:
+1. Define `@tool` in `tools/patient.py` (or appropriate file)
+2. Register the tool in `tools/__init__.py::TOOLS`
+3. Add its name to `PATIENT_SCOPED_TOOLNAMES`
+4. Add a deterministic test that asserts cross-patient access is blocked
+
+Skipping step 3 is a silent security bug.
+
+## Tool result caps — the prompt-size contract
+`_cap_limit()` in `agent/nodes.py` truncates the `limit` argument on every
+tool call to a ceiling (default 10). If your new tool returns large
+result sets (lists of records, notes, etc.):
+
+- Expose a `limit: int = 10` parameter on the tool signature
+- Honor the cap inside the tool (don't over-return and rely on the prompt
+  to ignore extras)
+- Add a test that verifies the cap is respected
+
+## Two-pass policy classification — deliberate, not redundant
+Policy runs twice:
+1. `policy_route` tool during the agent loop — routes by topic
+2. `final_policy_override_node` after validation — final safety gate
+
+The second pass catches cases where the agent ignored the routing signal
+or produced unsafe content despite a clean routing decision. Do not
+collapse into one pass. If adding new policy signals, add them to BOTH
+the classifier's topic list and the override node's rule evaluation.
+
+## Emergency short-circuit lives in `agent_node`
+Emergency keywords (chest pain, stroke signs, severe bleeding, etc.)
+trigger a templated triage response inside `agent_node` so the ReAct
+loop terminates on the next turn. This logic MUST stay in `agent_node`.
+
+## Tool I/O uses Pydantic
+All `@tool` functions return Pydantic models (or JSON-serializable
+primitives). Structured-output LLMs use `.with_structured_output(Schema)`
+where `Schema` is a Pydantic `BaseModel`. Never return a raw dict from a
+tool — it loses schema enforcement and confuses downstream parsing.
+
+## Node-function signature
+Every node:
+1. Takes `state: AgentState`, returns `dict[str, Any]` (partial update)
+2. Uses `logger = logging.getLogger(__name__)` at module top; never `print`
+3. Does not raise — errors become structured outputs (append a safe
+   `AIMessage` to `state["messages"]` and let the next node handle it)
+4. Is deterministic given the same state + same LLM responses (i.e.,
+   testable with mocked `_get_llm_*()` functions)
+
+## See also
+@AGENTS.md

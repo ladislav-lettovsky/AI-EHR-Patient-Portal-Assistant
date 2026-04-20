@@ -17,13 +17,13 @@ from .state import AgentState
 
 def build_graph() -> CompiledStateGraph:
     """Create, wire, compile, and return the LangGraph application."""
-    graph = StateGraph(AgentState)
+    graph = StateGraph(AgentState)  # ty: ignore[invalid-argument-type]
 
     # Adding nodes
-    graph.add_node("agent", agent_node)                                         # ReAct agent
-    graph.add_node("tool", tool_exec_node)                                      # Tool execution
-    graph.add_node("validate", validator_node)                                  # Cross-checks claims
-    graph.add_node("policy", final_policy_override_node)                        # Safety override
+    graph.add_node("agent", agent_node)  # ReAct agent
+    graph.add_node("tool", tool_exec_node)  # Tool execution
+    graph.add_node("validate", validator_node)  # Cross-checks claims
+    graph.add_node("policy", final_policy_override_node)  # Safety override
 
     # Start with
     graph.set_entry_point("agent")
@@ -36,13 +36,13 @@ def build_graph() -> CompiledStateGraph:
             "final": "validate",
             "tool": "tool",
             "agent": "agent",
-        }
+        },
     )
 
     # Define edges
-    graph.add_edge("tool", "agent")                                             # After tool, return to agent
-    graph.add_edge("validate", "policy")                                        # After validation, go to final
-    graph.add_edge("policy", END)                                               # After final, go to end
+    graph.add_edge("tool", "agent")  # After tool, return to agent
+    graph.add_edge("validate", "policy")  # After validation, go to final
+    graph.add_edge("policy", END)  # After final, go to end
 
     # Compile graph
-    return graph.compile()
+    return graph.compile()  # ty: ignore[invalid-return-type]

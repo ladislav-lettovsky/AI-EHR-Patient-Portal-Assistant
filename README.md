@@ -1,4 +1,6 @@
-# AI-Powered Electronic Health Record Patient Portal Assistant
+# AI-powered Electronic Health Record Patient Portal Assistant
+
+[![CI](https://github.com/ladislav-lettovsky/ai-ehr-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/ladislav-lettovsky/ai-ehr-assistant/actions/workflows/ci.yml)
 
 An AI-powered, guardrailed patient education and navigation assistant that explains Electronic Health Records (EHR) in plain language — built as a capstone project for the **UT Austin Postgraduate Program in AI / ML (Agentic AI specialization)**.
 
@@ -62,7 +64,7 @@ cp .env.example .env
 ## CLI Usage
 
 ```bash
-# Run all 11 built-in use cases
+# Run all 10 built-in use cases
 uv run -m ehr_assistant
 
 # Run a single query
@@ -160,6 +162,23 @@ ai-ehr-assistant/
 - **Runtime**: Python 3.12+
 - **Package Management**: uv
 
-## License
+## License & Acknowledgments
 
-MIT
+### Source code
+The source code in this repository is released under the [MIT License](LICENSE).
+Copyright (c) 2026 Ladislav Lettovsky.
+
+### Data
+The files under `data/` — `health_portal.db`, `medication_education.csv`,
+`patient_friendly_lab_explanations.csv`, `safety_policy_rules.csv`, and
+`trusted_sources_catalog.csv` — are course materials provided by the
+**University of Texas at Austin Post-Graduate Program in Artificial Intelligence
+& Machine Learning**. They are included here solely to make the demo
+reproducible and are retained under their original course-provided terms.
+They are **not** redistributed under the MIT License and are **not** covered
+by the copyright notice above.
+
+### Built with
+- [LangGraph](https://github.com/langchain-ai/langgraph) — agent orchestration
+- [LangChain](https://github.com/langchain-ai/langchain) — LLM integrations
+- [OpenAI](https://openai.com/) — underlying LLM

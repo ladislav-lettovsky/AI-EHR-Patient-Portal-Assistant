@@ -11,3 +11,6 @@ results/
 .DS_Store
 config.json
 .vscode/
+# Scratch directory — exploratory work, never committed
+.scratch/*
+!.scratch/.gitkeep

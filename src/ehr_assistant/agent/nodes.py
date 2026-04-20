@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Any, Dict
+from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_core.runnables import Runnable
 from langchain_openai import ChatOpenAI
 
 from ..config import (
@@ -31,17 +32,19 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Lazy-init LLMs (not at import time — enables testing with mocks)
 # ---------------------------------------------------------------------------
-_llm_gen_tools: ChatOpenAI | None = None
+# Note: _llm_gen_tools holds a Runnable (bind_tools return) not a raw ChatOpenAI;
+# _llm_pol (in tools/policy.py) holds a Runnable via with_structured_output.
+_llm_gen_tools: Runnable | None = None
 _llm_val: ChatOpenAI | None = None
 
 
-def _get_llm_gen_tools() -> ChatOpenAI:
+def _get_llm_gen_tools() -> Runnable:
     global _llm_gen_tools
     if _llm_gen_tools is None:
-        llm_gen = ChatOpenAI(
-            model=MODEL_GENERATOR,
+        llm_gen = ChatOpenAI(  # type: ignore[call-arg]
+            model_name=MODEL_GENERATOR,
             temperature=TEMPERATURE,
-            base_url=OPENAI_BASE_URL,
+            base_url=OPENAI_BASE_URL,  # ty: ignore[unknown-argument]
         )
         _llm_gen_tools = llm_gen.bind_tools(TOOLS)
     return _llm_gen_tools
@@ -51,9 +54,9 @@ def _get_llm_val() -> ChatOpenAI:
     global _llm_val
     if _llm_val is None:
         _llm_val = ChatOpenAI(
-            model=MODEL_VALIDATOR,
+            model_name=MODEL_VALIDATOR,
             temperature=TEMPERATURE,
-            base_url=OPENAI_BASE_URL,
+            base_url=OPENAI_BASE_URL,  # ty: ignore[unknown-argument]
         )
     return _llm_val
 
@@ -61,14 +64,14 @@ def _get_llm_val() -> ChatOpenAI:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-def _cap_limit(args: Dict[str, Any], max_limit: int = 10) -> Dict[str, Any]:
+def _cap_limit(args: dict[str, Any], max_limit: int = 10) -> dict[str, Any]:
     """Cap a tool call's 'limit' argument to control data volume and prompt size."""
-    out = dict(args)                                                            # Copy args so we don't mutate the original dict
+    out = dict(args)  # Copy args so we don't mutate the original dict
     if "limit" in out and out["limit"] is not None:
         try:
-            out["limit"] = min(int(out["limit"]), max_limit)                    # Cap numeric limit
+            out["limit"] = min(int(out["limit"]), max_limit)  # Cap numeric limit
         except Exception:
-            out["limit"] = max_limit                                            # Fallback if limit isn't parseable
+            out["limit"] = max_limit  # Fallback if limit isn't parseable
 
     return out
 
@@ -76,12 +79,12 @@ def _cap_limit(args: Dict[str, Any], max_limit: int = 10) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Nodes
 # ---------------------------------------------------------------------------
-def agent_node(state: AgentState) -> Dict[str, Any]:
+def agent_node(state: AgentState) -> dict[str, Any]:
     # Emergency short-circuit: finalize will enforce template; still produce a draft to stop loop
     if state.get("decision") == "escalate_emergency" and state.get("policy_template"):
         return {
             "draft_answer": state["policy_template"],
-            "messages": state["messages"],                                      # Still write something explicit
+            "messages": state["messages"],  # Still write something explicit
             "step": state["step"],
         }
 
@@ -125,7 +128,7 @@ def agent_node(state: AgentState) -> Dict[str, Any]:
     }
 
 
-def tool_exec_node(state: AgentState) -> Dict[str, Any]:
+def tool_exec_node(state: AgentState) -> dict[str, Any]:
     """
     Execute tool calls produced by the tool-enabled LLM and append results back into the message trace.
 
@@ -149,13 +152,13 @@ def tool_exec_node(state: AgentState) -> Dict[str, Any]:
             - citations: updated list with extracted citation metadata (if any)
             - errors: updated list with any tool execution / blocking errors
     """
-    last = state["messages"][-1]                                                # Last AI message should contain tool_calls
-    tool_calls = getattr(last, "tool_calls", []) or []                          # Tool call specs from LLM
-    tool_map = {t.name: t for t in TOOLS}                                       # Whitelist: tool name -> tool callable
+    last = state["messages"][-1]  # Last AI message should contain tool_calls
+    tool_calls = getattr(last, "tool_calls", []) or []  # Tool call specs from LLM
+    tool_map = {t.name: t for t in TOOLS}  # Whitelist: tool name -> tool callable
 
-    new_messages = list(state["messages"])                                      # Copy messages (avoid in-place mutation)
-    new_citations = list(state.get("citations", []))                            # Copy citations
-    new_errors = list(state.get("errors", []))                                  # Copy errors
+    new_messages = list(state["messages"])  # Copy messages (avoid in-place mutation)
+    new_citations = list(state.get("citations", []))  # Copy citations
+    new_errors = list(state.get("errors", []))  # Copy errors
 
     tools_called = list(state["tools_called"])
     tool_outputs = dict(state["tool_outputs"])
@@ -172,13 +175,17 @@ def tool_exec_node(state: AgentState) -> Dict[str, Any]:
     for tc in tool_calls:
         name = tc.get("name")
         args = tc.get("args", {}) or {}
-        tool_id = tc.get("id")                                                  # Required so ToolMessage can be associated to the correct call
+        tool_id = tc.get("id")  # Required so ToolMessage can be associated to the correct call
 
         # Block any tool not in our allowlist (security)
         if (name in BLOCKED_TOOLNAMES) or (name not in tool_map):
             new_errors.append(f"Blocked unknown tool call: {name}")
             new_messages.append(
-                ToolMessage(content=f"Blocked unknown tool: {name}", name=name or "unknown", tool_call_id=tool_id)
+                ToolMessage(
+                    content=f"Blocked unknown tool: {name}",
+                    name=name or "unknown",
+                    tool_call_id=tool_id,
+                )
             )
             if name:  # only add non-None names to avoid polluting the set
                 BLOCKED_TOOLNAMES.add(name)
@@ -214,8 +221,12 @@ def tool_exec_node(state: AgentState) -> Dict[str, Any]:
                 try:
                     policy_data = json.loads(result)
                     updated_decision = policy_data.get("decision", updated_decision)
-                    updated_policy_rule_id = policy_data.get("policy_rule_id", updated_policy_rule_id)
-                    updated_policy_template = policy_data.get("policy_template", updated_policy_template)
+                    updated_policy_rule_id = policy_data.get(
+                        "policy_rule_id", updated_policy_rule_id
+                    )
+                    updated_policy_template = policy_data.get(
+                        "policy_template", updated_policy_template
+                    )
                 except Exception:
                     pass
 
@@ -227,23 +238,21 @@ def tool_exec_node(state: AgentState) -> Dict[str, Any]:
                         cit = {
                             "source_id": data.get("source_id"),
                             "citation_url": data.get("citation_url"),
-                            "used_for": "lab education" if name == "lookup_lab_education" else "medication education",
+                            "used_for": "lab education"
+                            if name == "lookup_lab_education"
+                            else "medication education",
                         }
                         if cit["source_id"] or cit["citation_url"]:
                             new_citations.append(cit)
                 except Exception:
                     pass
 
-            new_messages.append(
-                ToolMessage(content=result, name=name, tool_call_id=tool_id)
-            )
+            new_messages.append(ToolMessage(content=result, name=name, tool_call_id=tool_id))
 
         except Exception as e:
             err = f"{name} failed: {e}"
             new_errors.append(err)
-            new_messages.append(
-                ToolMessage(content=err, name=name, tool_call_id=tool_id)
-            )
+            new_messages.append(ToolMessage(content=err, name=name, tool_call_id=tool_id))
 
     return {
         "messages": new_messages,
@@ -251,24 +260,24 @@ def tool_exec_node(state: AgentState) -> Dict[str, Any]:
         "errors": new_errors,
         "tools_called": tools_called,
         "tool_outputs": tool_outputs,
-        "preferred_language": updated_preferred_language,                       # Propagate updated value
-        "health_literacy_level": updated_health_literacy_level,                 # Propagate updated value
-        "decision": updated_decision,                                           # Propagate policy decision
-        "policy_rule_id": updated_policy_rule_id,                              # Propagate matched rule
-        "policy_template": updated_policy_template,                            # Propagate response template
+        "preferred_language": updated_preferred_language,  # Propagate updated value
+        "health_literacy_level": updated_health_literacy_level,  # Propagate updated value
+        "decision": updated_decision,  # Propagate policy decision
+        "policy_rule_id": updated_policy_rule_id,  # Propagate matched rule
+        "policy_template": updated_policy_template,  # Propagate response template
     }
 
 
 def should_continue(state: AgentState) -> str:
     """Determine the next step in the ReAct loop based on the latest state."""
     if state.get("draft_answer"):
-        return "final"                                                          # Agent has produced an answer; exit loop
+        return "final"  # Agent has produced an answer; exit loop
 
-    last = state["messages"][-1]                                                # Inspect the most recent AI message
+    last = state["messages"][-1]  # Inspect the most recent AI message
     if getattr(last, "tool_calls", None):
-        return "tool"                                                           # Tools requested; execute them
+        return "tool"  # Tools requested; execute them
 
-    return "agent"                                                              # No answer yet and no tools requested; ask agent again
+    return "agent"  # No answer yet and no tools requested; ask agent again
 
 
 _HARD_BLOCK_MESSAGE = (
@@ -278,7 +287,7 @@ _HARD_BLOCK_MESSAGE = (
 )
 
 
-def final_policy_override_node(state: AgentState) -> Dict[str, Any]:
+def final_policy_override_node(state: AgentState) -> dict[str, Any]:
     """Final, deterministic safety override to select the response returned to the user."""
     decision = state.get("decision", "answer")
     user_query = state.get("user_query")
@@ -294,13 +303,15 @@ def final_policy_override_node(state: AgentState) -> Dict[str, Any]:
 
     # If it's an empty query, engage in a dialog
     if decision == "answer" and len(user_query) == 0:
-        return {"final_answer": "How can I help you? I'm EHR assistant and can answer a health-related query"}
+        return {
+            "final_answer": "How can I help you? I'm EHR assistant and can answer a health-related query"
+        }
 
     # Otherwise return the model's draft answer (or a fallback)
     return {"final_answer": state.get("draft_answer") or "I'm not sure how to answer that yet."}
 
 
-def validator_node(state: AgentState) -> Dict[str, Any]:
+def validator_node(state: AgentState) -> dict[str, Any]:
     """Cross-checks all claims against tool results."""
 
     payload = {
@@ -318,13 +329,11 @@ def validator_node(state: AgentState) -> Dict[str, Any]:
     raw = _get_llm_val().invoke([system, user])
 
     try:
-        # Attempt to extract JSON from markdown code block
-        json_match = re.search(r"```json\s*(.*?)\s*```", raw.content, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(1)
-        else:
-            # If not in a code block, assume it's plain JSON
-            json_str = raw.content.strip()
+        # Normalize LLM content to string (LangChain messages can contain list parts for multimodal)
+        content = raw.content if isinstance(raw.content, str) else str(raw.content)
+        # Extract JSON from markdown code block if present; otherwise assume plain JSON
+        json_match = re.search(r"```json\s*(.*?)\s*```", content, re.DOTALL)
+        json_str = json_match.group(1) if json_match else content.strip()
 
         result = json.loads(json_str)
     except Exception as e:
@@ -342,6 +351,5 @@ def validator_node(state: AgentState) -> Dict[str, Any]:
         "verdict": result.get("verdict", ""),
         "scores": result.get("scores", {}),
         "flags": result.get("flags", []),
-
         "hard_block": bool(result.get("hard_block", False)),
     }

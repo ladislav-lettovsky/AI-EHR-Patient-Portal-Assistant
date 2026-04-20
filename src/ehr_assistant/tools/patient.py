@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from langchain_core.tools import tool
 
 from ..db import sql_query
@@ -29,7 +27,7 @@ def get_patient_profile(patient_id: str) -> str:
 @tool("list_patient_encounters")
 def list_patient_encounters(patient_id: str, limit: int = 5) -> str:
     """Return up to N recent encounters for a patient."""
-    max_val = 7                                                                 # Max number of encounters to return
+    max_val = 7  # Max number of encounters to return
     try:
         limit = max(1, min(int(limit), max_val))
     except Exception:
@@ -64,7 +62,7 @@ def get_recent_clinical_note(patient_id: str, note_type: str = "visit_note") -> 
         ORDER BY created_at DESC
         LIMIT 1
         """,
-         (patient_id, note_type),
+        (patient_id, note_type),
     )
 
     return to_json(rows[0] if rows else {"error": f"No {note_type} found for patient {patient_id}"})
@@ -87,9 +85,9 @@ def get_clinical_notes_for_encounter(patient_id: str, encounter_id: str) -> str:
 
 
 @tool("get_labs")
-def get_labs(patient_id: str, test_name: Optional[str] = None, limit: int = 10) -> str:
+def get_labs(patient_id: str, test_name: str | None = None, limit: int = 10) -> str:
     """Return recent lab results, optionally filtered by test name."""
-    max_val = 10                                                                # Max number of lab results to return
+    max_val = 10  # Max number of lab results to return
     try:
         limit = max(1, min(int(limit), max_val))
     except Exception:

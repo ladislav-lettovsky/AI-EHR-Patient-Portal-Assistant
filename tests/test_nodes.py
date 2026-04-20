@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import pytest
-
-from ehr_assistant.agent.nodes import _cap_limit, should_continue, final_policy_override_node
-from ehr_assistant.agent.state import AgentState, init_state
+from ehr_assistant.agent.nodes import _cap_limit, final_policy_override_node, should_continue
+from ehr_assistant.agent.state import init_state
 
 
 class TestInitState:
-
     def test_returns_correct_keys(self):
         state = init_state("P001", "What are my labs?", max_steps=5)
         assert state["patient_id"] == "P001"
@@ -32,7 +29,6 @@ class TestInitState:
 
 
 class TestCapLimit:
-
     def test_caps_high_limit(self):
         result = _cap_limit({"limit": 100}, max_limit=10)
         assert result["limit"] == 10
@@ -61,7 +57,6 @@ class TestCapLimit:
 
 
 class TestShouldContinue:
-
     def test_returns_final_when_draft_answer(self):
         state = init_state("P001", "test")
         state["draft_answer"] = "Here is my answer"
@@ -74,7 +69,7 @@ class TestShouldContinue:
         class _MockMsg:
             tool_calls = [{"name": "get_labs", "args": {}, "id": "1"}]
 
-        state["messages"].append(_MockMsg())
+        state["messages"].append(_MockMsg())  # ty: ignore[invalid-argument-type]
         assert should_continue(state) == "tool"
 
     def test_returns_agent_when_no_tools_no_answer(self):
@@ -84,12 +79,11 @@ class TestShouldContinue:
         class _MockMsg:
             tool_calls = None
 
-        state["messages"].append(_MockMsg())
+        state["messages"].append(_MockMsg())  # ty: ignore[invalid-argument-type]
         assert should_continue(state) == "agent"
 
 
 class TestFinalPolicyOverrideNode:
-
     def test_escalate_emergency_overrides(self):
         state = init_state("P001", "chest pain")
         state["decision"] = "escalate_emergency"

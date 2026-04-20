@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 
-def print_audit_log(out: Dict[str, Any]) -> None:
+def print_audit_log(out: dict[str, Any]) -> None:
     """Print audit log of ReAct loop messages."""
     print("\nTRACE OF MESSAGES FROM THE AGENT:\n")
     for i, m in enumerate(out["messages"]):
-
         # Message name
         print(f"[{i}] {type(m).__name__}", end="")
 
@@ -49,22 +48,22 @@ def print_audit_log(out: Dict[str, Any]) -> None:
         flags = out.get("flags", [])
 
         score_labels = {
-            "D1_guardrail_adherence":  "D1  Guardrail Adherence ",
+            "D1_guardrail_adherence": "D1  Guardrail Adherence ",
             "D2_factual_groundedness": "D2  Factual Groundedness",
-            "D3_query_resolution":     "D3  Query Resolution    ",
-            "D4_literacy_adherence":   "D4  Literacy Adherence  ",
-            "D5_language_adherence":   "D5  Language Adherence  ",
-            "D6_tone_empathy":         "D6  Tone & Empathy      ",
-            "D7_actionability":        "D7  Actionability       ",
+            "D3_query_resolution": "D3  Query Resolution    ",
+            "D4_literacy_adherence": "D4  Literacy Adherence  ",
+            "D5_language_adherence": "D5  Language Adherence  ",
+            "D6_tone_empathy": "D6  Tone & Empathy      ",
+            "D7_actionability": "D7  Actionability       ",
         }
         score_dimension = {
-            "D1_guardrail_adherence":  "D1",
+            "D1_guardrail_adherence": "D1",
             "D2_factual_groundedness": "D2",
-            "D3_query_resolution":     "D3",
-            "D4_literacy_adherence":   "D4",
-            "D5_language_adherence":   "D5",
-            "D6_tone_empathy":         "D6",
-            "D7_actionability":        "D7",
+            "D3_query_resolution": "D3",
+            "D4_literacy_adherence": "D4",
+            "D5_language_adherence": "D5",
+            "D6_tone_empathy": "D6",
+            "D7_actionability": "D7",
         }
         for key, label in score_labels.items():
             score = scores.get(key)
@@ -83,7 +82,9 @@ def print_audit_log(out: Dict[str, Any]) -> None:
             # Print Reason for each flagged dimension
             dimension_key = score_dimension.get(key)
             if dimension_key:
-                flagged_dimension = next((d for d in flags if d["dimension"] == dimension_key), None)
+                flagged_dimension = next(
+                    (d for d in flags if d["dimension"] == dimension_key), None
+                )
                 if flagged_dimension is not None:
                     reason = flagged_dimension.get("reason", "")
                     print(f"\t Reason: {reason}")
