@@ -112,40 +112,33 @@ uv run -m ehr_assistant --no-json
 ```
 ai-ehr-assistant/
 ├── src/
-│   └── ehr_assistant/
-│       ├── __init__.py              # Package version
-│       ├── config.py                # Environment-based configuration
-│       ├── db.py                    # SQLite connection management
-│       ├── data.py                  # CSV DataFrame loaders (cached)
-│       ├── utils.py                 # Shared helpers (norm_text, to_json)
+│   └── ehr_assistant/                 # Importable package
+│       ├── config.py                  # Environment-based configuration
+│       ├── db.py                      # SQLite connection management
+│       ├── data.py                    # CSV DataFrame loaders (cached)
+│       ├── utils.py                   # Shared helpers (norm_text, to_json)
 │       ├── tools/
-│       │   ├── __init__.py          # Tool registry + constant sets
-│       │   ├── patient.py           # 7 patient-scoped EHR tools
-│       │   ├── education.py         # 3 CSV-lookup education tools
-│       │   └── policy.py            # Safety policy routing tool
+│       │   ├── __init__.py            # Tool registry + constant sets
+│       │   ├── patient.py             # 7 patient-scoped EHR tools
+│       │   ├── education.py           # 3 CSV-lookup education tools
+│       │   └── policy.py              # Safety policy routing tool
 │       ├── agent/
-│       │   ├── __init__.py
-│       │   ├── state.py             # AgentState TypedDict + init_state()
-│       │   ├── nodes.py             # Graph node functions
-│       │   ├── graph.py             # build_graph() → compiled LangGraph
-│       │   └── prompts.py           # System + validation prompts
+│       │   ├── state.py               # AgentState TypedDict + init_state()
+│       │   ├── nodes.py               # Graph node functions
+│       │   ├── graph.py               # build_graph() → compiled LangGraph
+│       │   └── prompts.py             # System + validation prompts
 │       ├── reporting/
-│       │   ├── __init__.py
-│       │   ├── json_writer.py       # Structured JSON output
-│       │   └── terminal.py          # Terminal audit report
-│       └── runner.py                # CLI entry point
-├── tests/
-│   ├── conftest.py                  # Shared fixtures
-│   ├── test_tools.py                # Tool unit tests
-│   ├── test_policy.py               # Policy routing tests (needs API key)
-│   ├── test_nodes.py                # Node logic tests
-│   └── test_integration.py          # End-to-end tests (needs API key)
+│       │   ├── json_writer.py         # Structured JSON output
+│       │   └── terminal.py            # Terminal audit report
+│       └── runner.py                  # CLI entry point
+├── tests/                             # Unit + integration tests (5 files)
 ├── data/                              # Data files (UT Austin course materials)
 │   ├── health_portal.db
 │   ├── medication_education.csv
 │   ├── patient_friendly_lab_explanations.csv
 │   ├── safety_policy_rules.csv
 │   └── trusted_sources_catalog.csv
+├── results/                           # CLI JSON output (git-ignored)
 ├── .scratch/                          # Sanctioned scratchpad for AI agents (git-kept, .gitignored contents)
 ├── .claude/                           # Claude Code project config
 │   └── settings.json
