@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 
-import pytest
-
 
 class TestPatientTools:
     """Test patient-scoped tools against health_portal.db."""
@@ -41,26 +39,36 @@ class TestPatientTools:
         assert "note_id" in data or "error" in data
 
     def test_get_clinical_notes_for_encounter(self):
-        from ehr_assistant.tools.patient import get_clinical_notes_for_encounter, list_patient_encounters
+        from ehr_assistant.tools.patient import (
+            get_clinical_notes_for_encounter,
+            list_patient_encounters,
+        )
 
         # Get a real encounter_id first
         encounters_raw = list_patient_encounters.invoke({"patient_id": "P001", "limit": 1})
         encounters = json.loads(encounters_raw)
         if encounters:
             enc_id = encounters[0]["encounter_id"]
-            raw = get_clinical_notes_for_encounter.invoke({"patient_id": "P001", "encounter_id": enc_id})
+            raw = get_clinical_notes_for_encounter.invoke(
+                {"patient_id": "P001", "encounter_id": enc_id}
+            )
             data = json.loads(raw)
             assert isinstance(data, list)
 
     def test_get_clinical_notes_for_encounter_cross_patient_blocked(self):
-        from ehr_assistant.tools.patient import get_clinical_notes_for_encounter, list_patient_encounters
+        from ehr_assistant.tools.patient import (
+            get_clinical_notes_for_encounter,
+            list_patient_encounters,
+        )
 
         # Grab P001's encounter, then query it as P002 — should return empty list (scoped out)
         encounters_raw = list_patient_encounters.invoke({"patient_id": "P001", "limit": 1})
         encounters = json.loads(encounters_raw)
         if encounters:
             enc_id = encounters[0]["encounter_id"]
-            raw = get_clinical_notes_for_encounter.invoke({"patient_id": "P002", "encounter_id": enc_id})
+            raw = get_clinical_notes_for_encounter.invoke(
+                {"patient_id": "P002", "encounter_id": enc_id}
+            )
             data = json.loads(raw)
             assert isinstance(data, list)
             assert len(data) == 0, "Cross-patient note access must return no rows"

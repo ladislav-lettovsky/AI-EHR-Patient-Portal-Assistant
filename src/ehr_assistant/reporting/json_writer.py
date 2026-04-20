@@ -3,19 +3,19 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 
-def write_result(result: Dict[str, Any], output_dir: Path) -> Path:
+def write_result(result: dict[str, Any], output_dir: Path) -> Path:
     """Write a single run result as a timestamped JSON file.
 
     Returns the path to the written file.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     patient_id = result.get("patient_id", "unknown")
     filename = f"result_{patient_id}_{ts}.json"
     filepath = output_dir / filename

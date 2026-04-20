@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import List
-
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
@@ -13,22 +12,23 @@ from ..config import MODEL_POLICY, OPENAI_BASE_URL, TEMPERATURE
 from ..data import get_policy_rules, get_safety_topics
 from ..utils import norm_text, to_json
 
+
 # ---------- Output schema ----------
 class ClassificationResult(BaseModel):
-    topics: List[str] = Field(description="Sensitive topics detected in the query")
+    topics: list[str] = Field(description="Sensitive topics detected in the query")
 
 
-_llm_pol: ChatOpenAI | None = None
+_llm_pol: Runnable | None = None
 
 
-def _get_llm_pol() -> ChatOpenAI:
-    """Lazy-init the policy classification LLM."""
+def _get_llm_pol() -> Runnable:
+    """Lazy-init the policy classification LLM (returns Runnable produced by with_structured_output)."""
     global _llm_pol
     if _llm_pol is None:
         _llm_pol = ChatOpenAI(
-            model=MODEL_POLICY,
+            model_name=MODEL_POLICY,
             temperature=TEMPERATURE,
-            base_url=OPENAI_BASE_URL,
+            base_url=OPENAI_BASE_URL,  # ty: ignore[unknown-argument]
         ).with_structured_output(ClassificationResult)
     return _llm_pol
 
@@ -63,7 +63,9 @@ def policy_route(user_text: str) -> str:
         query=norm_text(user_text),
     )
 
-    matched_safety_topics = [norm_text(t) for t in _get_llm_pol().invoke(formatted_prompt).topics]
+    # with_structured_output returns a ClassificationResult at runtime; ty cannot follow this
+    classification: ClassificationResult = _get_llm_pol().invoke(formatted_prompt)
+    matched_safety_topics = [norm_text(t) for t in classification.topics]
 
     # Extract policy rules that match safety topics
     matched_policy_rules = []
@@ -108,8 +110,9 @@ def policy_route(user_text: str) -> str:
                 {
                     "rule_id": m["rule_id"],
                     "action": m["agent_action"],
-                    "topic": m["pattern_or_topic"]
-                } for m in matches_policy_rules_sorted
+                    "topic": m["pattern_or_topic"],
+                }
+                for m in matches_policy_rules_sorted
             ],
         }
     )
