@@ -140,18 +140,33 @@ ai-ehr-assistant/
 │   ├── test_policy.py               # Policy routing tests (needs API key)
 │   ├── test_nodes.py                # Node logic tests
 │   └── test_integration.py          # End-to-end tests (needs API key)
-├── data/
+├── data/                              # Data files (UT Austin course materials)
 │   ├── health_portal.db
 │   ├── medication_education.csv
 │   ├── patient_friendly_lab_explanations.csv
 │   ├── safety_policy_rules.csv
 │   └── trusted_sources_catalog.csv
-├── .github/workflows/ci.yml
-├── .env.example
-├── .gitignore
-├── pyproject.toml
-├── README.md
-└── CONTRIBUTING.md
+├── .scratch/                          # Sanctioned scratchpad for AI agents (git-kept, .gitignored contents)
+├── .claude/                           # Claude Code project config
+│   └── settings.json
+├── .cursor/                           # Cursor IDE rules
+│   └── rules/
+│       ├── 00-always.mdc              # Always-on invariants + check gate
+│       ├── langgraph.mdc              # LangGraph patterns (scoped)
+│       ├── tests.mdc                  # Pytest conventions (scoped)
+│       └── writing-rules.mdc          # Meta-guide for rule authoring
+├── .github/workflows/ci.yml           # GitHub Actions CI (check + integration jobs)
+├── AGENTS.md                          # AI agent memory — invariants, architecture, pitfalls
+├── CLAUDE.md                          # Claude Code entry point → AGENTS.md
+├── CONTRIBUTING.md                    # Contribution guide
+├── LICENSE                            # MIT (source code only; see README Acknowledgments for data)
+├── README.md                          # You are here
+├── justfile                           # Task runner — `just check` = full quality gate
+├── pyproject.toml                     # Project metadata, deps, ruff/ty/pytest config
+├── uv.lock                            # Reproducible dependency lockfile
+├── .pre-commit-config.yaml            # Ruff + ty pre-commit hooks
+├── .env.example                       # Environment variable template
+└── .gitignore
 ```
 
 ## Tech Stack
@@ -182,3 +197,7 @@ by the copyright notice above.
 - [LangGraph](https://github.com/langchain-ai/langgraph) — agent orchestration
 - [LangChain](https://github.com/langchain-ai/langchain) — LLM integrations
 - [OpenAI](https://openai.com/) — underlying LLM
+
+## Author
+
+**Ladislav Lettovsky** — [GitHub](https://github.com/ladislav-lettovsky)
