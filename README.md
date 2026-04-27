@@ -1,6 +1,7 @@
 # AI-powered Electronic Health Record Patient Portal Assistant
 
 [![CI](https://github.com/ladislav-lettovsky/ai-ehr-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/ladislav-lettovsky/ai-ehr-assistant/actions/workflows/ci.yml)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ladislav-lettovsky/ai-ehr-assistant)
 
 An AI-powered, guardrailed patient education and navigation assistant that explains Electronic Health Records (EHR) in plain language — built as a capstone project for the **UT Austin Postgraduate Program in AI / ML (Agentic AI specialization)**.
 
