@@ -6,12 +6,14 @@ globs: tests/**/*.py
 # Test conventions
 
 ## Canonical commands
+
 - Run all tests: `just test` (wraps `uv run pytest`)
 - Full pre-commit check: `just check` (ruff + ty + pytest)
 - Skip integration: `pytest -m "not integration"`
 - Run only integration: `pytest -m integration` (requires `OPENAI_API_KEY`)
 
 ## File and class structure
+
 - One test file per source module/concern (`test_nodes.py` for `agent/nodes.py`,
   `test_tools.py` for `tools/patient.py` + `tools/education.py`, etc.)
 - Module docstring required: `"""Tests for X."""`
@@ -21,12 +23,14 @@ globs: tests/**/*.py
   so pytest won't collect them as tests
 
 ## Markers
+
 - `@pytest.mark.integration` for tests requiring live LLM APIs — registered in
   `pyproject.toml::[tool.pytest.ini_options]::markers`
 - Integration tests auto-skip without `OPENAI_API_KEY` set — never let them
   hard-fail on missing env; use `skipif` with a clear reason
 
 ## Mocking LLMs
+
 Deterministic tests mock `ChatOpenAI.invoke()` (or the lazy-init helpers
 like `_get_llm_gen_tools()`). Return values must match the Pydantic schema
 the production code expects:
@@ -47,13 +51,16 @@ Do NOT mock at the `langchain_openai` module level — patch the helper
 stable across LangChain version bumps.
 
 ## Environment setup belongs in `conftest.py`
+
 Shared setup (sys.path, env vars like `LANGCHAIN_TRACING_V2=false`, seeded
 SQLite paths) lives in `tests/conftest.py`, not in individual test files.
 If you need a new shared fixture, add it there.
 
 ## Architectural-invariant tests
+
 Some tests encode contracts from the codebase (not just behavior). Treat
 these as load-bearing:
+
 - `test_nodes.py` — routing logic (`should_continue` branches), patient-id
   rewrite on tool calls
 - `test_policy.py` — policy-override decisions across escalation tiers
@@ -65,6 +72,7 @@ When you add a new patient-reading tool, add a cross-patient-access test
 to `test_tools.py`.
 
 ## What not to test
+
 - **LLM output content (non-deterministic)** — test structure
   (`result.topics is a list`, `"tool" in should_continue(state)`), not prose
 - **Prompt strings verbatim** — they change; test behavior under mocked LLM
@@ -75,6 +83,7 @@ to `test_tools.py`.
   shape, that's on them
 
 ## Skipped tests in `test_integration.py`
+
 The 2 skipped tests you see in `just test` output are integration tests
 that need a real OpenAI key. They are skipped in CI too (CI injects a
 fake key and relies on the skip behavior). This is intentional — do not
@@ -82,4 +91,5 @@ fake key and relies on the skip behavior). This is intentional — do not
 locally against live APIs for end-to-end confidence.
 
 ## See also
+
 @AGENTS.md
