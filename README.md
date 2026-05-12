@@ -7,7 +7,7 @@ An AI-powered, guardrailed patient education and navigation assistant that expla
 
 ## Architecture
 
-```
+```text
 User Query
     │
     ▼
@@ -32,7 +32,7 @@ User Query
 The system uses a **ReAct (Reasoning + Acting) pattern** orchestrated via LangGraph with four processing nodes:
 
 | Node | Role |
-|------|------|
+| --- | --- |
 | `agent` | ReAct agent — invokes the LLM with tools |
 | `tool` | Executes LLM-requested tool calls |
 | `validate` | Cross-checks claims against tool outputs (7-dimension rubric) |
@@ -84,7 +84,7 @@ uv run -m ehr_assistant --no-json
 ### CLI Flags
 
 | Flag | Description |
-|------|-------------|
+| --- | --- |
 | `-p`, `--patient-id` | Patient ID (default: run all 10 test cases) |
 | `-q`, `--query` | User query (required with `--patient-id`) |
 | `--max-steps` | Max ReAct steps (default: 5) |
@@ -96,7 +96,7 @@ uv run -m ehr_assistant --no-json
 ## Test Cases
 
 | # | Patient | Scenario | Expected Behavior |
-|---|---------|----------|-------------------|
+| --- | --- | --- | --- |
 | 1 | P001 | Lab result explanation (HbA1c) | Educational answer with citations |
 | 2 | P002 | Medication education (atorvastatin) | Side effects + red flags |
 | 3 | P003 | Visit note summary | Summary in patient's language |
@@ -110,7 +110,7 @@ uv run -m ehr_assistant --no-json
 
 ## Project Structure
 
-```
+```text
 ai-ehr-assistant/
 ├── src/
 │   └── ehr_assistant/                 # Importable package
@@ -174,10 +174,12 @@ ai-ehr-assistant/
 ## License & Acknowledgments
 
 ### Source code
+
 The source code in this repository is released under the [MIT License](LICENSE).
 Copyright (c) 2026 Ladislav Lettovsky.
 
 ### Data
+
 The files under `data/` — `health_portal.db`, `medication_education.csv`,
 `patient_friendly_lab_explanations.csv`, `safety_policy_rules.csv`, and
 `trusted_sources_catalog.csv` — are course materials provided by the
@@ -188,6 +190,7 @@ They are **not** redistributed under the MIT License and are **not** covered
 by the copyright notice above.
 
 ### Built with
+
 - [LangGraph](https://github.com/langchain-ai/langgraph) — agent orchestration
 - [LangChain](https://github.com/langchain-ai/langchain) — LLM integrations
 - [OpenAI](https://openai.com/) — underlying LLM

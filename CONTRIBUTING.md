@@ -5,12 +5,14 @@ Thank you for your interest in contributing to the AI EHR Assistant!
 ## Getting Started
 
 1. **Fork** the repository and clone your fork:
+
    ```bash
    git clone https://github.com/<your-username>/ai-ehr-assistant.git
    cd ai-ehr-assistant
    ```
 
 2. **Create a virtual environment** and install dependencies:
+
    ```bash
    uv venv .venv
    source .venv/bin/activate
@@ -18,19 +20,23 @@ Thank you for your interest in contributing to the AI EHR Assistant!
    ```
 
 3. **Set up your environment**:
+
    ```bash
    cp .env.example .env
    # Edit .env with your OPENAI_API_KEY
    ```
 
 4. **Install pre-commit hooks** (once per clone):
+
    ```bash
    just install-hooks
    ```
+
    This registers the hooks defined in `.pre-commit-config.yaml` so they run
    automatically on every `git commit`.
 
 5. **Create a feature branch**:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -40,6 +46,7 @@ Thank you for your interest in contributing to the AI EHR Assistant!
 - Write code following existing patterns in `src/ehr_assistant/`.
 - Add or update tests in `tests/`.
 - Run the test suite before submitting:
+
   ```bash
   python3 -m pytest tests/ -v --tb=short
   ```
@@ -59,11 +66,13 @@ Thank you for your interest in contributing to the AI EHR Assistant!
 ## Running Tests
 
 Unit tests (no API key needed):
+
 ```bash
 python3 -m pytest tests/ -v --tb=short
 ```
 
 Integration tests (requires `OPENAI_API_KEY`):
+
 ```bash
 OPENAI_API_KEY=your-key python3 -m pytest tests/ -v --tb=short
 ```
