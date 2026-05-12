@@ -1,6 +1,7 @@
 # ai-ehr-assistant — AI Agent Memory
 
 ## What this is
+
 A LangGraph-powered patient-portal assistant that answers clinical questions
 about EHR data (labs, meds, allergies, visit notes). It combines a
 ReAct agent loop with deterministic safety guardrails — a separate validator
@@ -9,6 +10,7 @@ PHI leakage, cross-patient access, and unsafe clinical content before it
 reaches the user.
 
 ## Stack
+
 - Python 3.12+, `uv` for dependency management, `just` as the task runner
 - LangGraph (state-machine orchestration), LangChain, langchain-openai
 - OpenAI GPT-4o-mini (generator + policy classifier) and GPT-4o (validator)
@@ -18,6 +20,7 @@ reaches the user.
 - Linting: ruff; Type checking: `ty` (Astral); Pre-commit hooks enabled
 
 ## Commands you can run without asking
+
 - `just fmt` — format code
 - `just lint` — ruff check
 - `just lint-fix` — ruff check with --fix
@@ -31,10 +34,12 @@ reaches the user.
 - Read-only git: `git status`, `git diff`, `git log`, `git branch`
 
 ## Commands with preconditions
+
 - `git commit` is allowed on a non-`main` branch **only after `just check`
   passes with no errors**. On `main`, always ask first.
 
 ## Commands that need explicit approval
+
 - `uv add`, `uv remove` (dependency changes)
 - `git push`, `git reset --hard`
 - `gh pr create`, `gh pr merge`
@@ -81,6 +86,7 @@ reaches the user.
    you add a tool that returns large result sets, honor the `limit` contract.
 
 ## Where things live
+
 - `src/ehr_assistant/` — production package (src layout)
   - `agent/` — LangGraph graph + nodes
     - `state.py` — `AgentState` TypedDict (messages, patient_id, max_steps, etc.)
@@ -103,6 +109,7 @@ reaches the user.
 - `.scratch/` — ephemeral work zone (git-ignored except `.gitkeep`)
 
 ## LangGraph conventions for this repo
+
 - State is `AgentState` in `agent/state.py` — a TypedDict, not a dataclass.
   LangGraph compiles TypedDict states natively.
 - Nodes receive `AgentState`, return partial `dict[str, Any]` updates.
@@ -116,6 +123,7 @@ reaches the user.
   tool_call args.
 
 ## Testing conventions
+
 - Deterministic tests (no API) are the default and live in `tests/test_*.py`.
   They use fakes/mocks for `ChatOpenAI` so no network calls happen.
 - Integration tests are marked `@pytest.mark.integration` and are SKIPPED
@@ -127,6 +135,7 @@ reaches the user.
   with mocked `invoke()` return values that match the Pydantic schema.
 
 ## Type checking with `ty`
+
 - To suppress a finding: `# ty: ignore[<rule-name>]` — where `<rule-name>`
   is the exact code from the ty diagnostic header (e.g.,
   `invalid-argument-type`, `invalid-return-type`, `unknown-argument`).
@@ -135,6 +144,7 @@ reaches the user.
   Annotate intent in a comment above the suppression when it isn't obvious.
 
 ## Ephemeral / scratch work
+
 Use `.scratch/` at the repo root for any exploratory, diagnostic, or
 throwaway work — quick Python snippets, draft queries, debug logs, or
 scratch notes. The directory is git-ignored (except `.gitkeep`), so
@@ -146,11 +156,13 @@ nothing here is ever committed.
 - Clean up periodically (nothing persists beyond your working session)
 
 Examples of good `.scratch/` use:
+
 - `.scratch/try_new_prompt.py` — testing a policy-prompt variation
 - `.scratch/poke_db.py` — interactive SQLite exploration
 - `.scratch/validator_debug.md` — notes while tracing a validation miss
 
 ## Before saying "done"
+
 1. `just check` passes (ruff + ty + pytest, no integration tests)
 2. Any new public function has a test and a type-annotated signature
 3. No new `print()` calls in production code paths (reporting/ excepted)
