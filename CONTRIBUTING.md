@@ -11,13 +11,17 @@ Thank you for your interest in contributing to the AI EHR Assistant!
    cd ai-ehr-assistant
    ```
 
-2. **Create a virtual environment** and install dependencies:
+2. **Rehydrate the checkout** — sync dev dependencies and install pre-commit hooks:
 
    ```bash
-   uv venv .venv
-   source .venv/bin/activate
-   uv sync --extra dev
+   just refresh
    ```
+
+   `just refresh` is the canonical setup command. Run it after a fresh clone,
+   after `git worktree add`, or after pulling a branch that changed
+   `pyproject.toml` or `uv.lock`. Under the hood it runs `uv sync --extra dev`
+   and `uv run pre-commit install`. You can still run `just install-hooks` alone
+   if you only need to (re-)register hooks.
 
 3. **Set up your environment**:
 
@@ -26,20 +30,21 @@ Thank you for your interest in contributing to the AI EHR Assistant!
    # Edit .env with your OPENAI_API_KEY
    ```
 
-4. **Install pre-commit hooks** (once per clone):
-
-   ```bash
-   just install-hooks
-   ```
-
-   This registers the hooks defined in `.pre-commit-config.yaml` so they run
-   automatically on every `git commit`.
-
-5. **Create a feature branch**:
+4. **Create a feature branch**:
 
    ```bash
    git checkout -b feature/your-feature-name
    ```
+
+## Per-checkout virtual environments
+
+The `.venv` directory is git-ignored and lives inside each checkout. A new
+`git worktree add` produces a worktree with **no** `.venv` until you run
+`just refresh` there. After a dependency change lands on `main`, run `just refresh`
+again so type checks and tests use the updated environment.
+
+If you suddenly see unresolved imports or missing commands after switching
+branches or adding a worktree, run `just refresh` before debugging further.
 
 ## Development Workflow
 
